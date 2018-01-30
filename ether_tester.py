@@ -388,8 +388,8 @@ class StatisticsCollector(object):
         stats_list = []
         containers_count = len(self.containers)
 
-        for i in range(0, containers_count):
-            base_level_str = StringIO(self.containers[i].get_net_stats())
+        for c in self.containers:
+            base_level_str = StringIO(c.get_net_stats())
             base_level = pandas.read_csv(base_level_str, sep="\t")
             base_levels.append(base_level)
 
@@ -399,28 +399,30 @@ class StatisticsCollector(object):
         start_time = datetime.datetime.now()
         delta = 0
 
-        template_dict = dict()
+        template_dict_array = []
         if test_scenario is not None:
-            for i in range(0, len(test_scenario)):
-                template_dict['result{num}'.format(num=i)] = ''
+            template_dict_array = [{'result0': ''} for x in range(len(test_scenario))]
 
         while delta < n:
             # todo: run in parallel
+            print("----------------------------------------------------")
             for i in range(0, containers_count):
                 if test_scenario is not None:
                     # in test_scenario the results of prev steps can be used in placeholders like '$result0' -
                     # https://docs.python.org/3.1/library/string.html#template-strings
                     for j, test_command in enumerate(test_scenario):
+                        template_dict = template_dict_array[i]
                         test_command = Template(test_command).safe_substitute(template_dict)
                         print("Template", template_dict, test_command)
 
                         res = self.containers[i].run(test_command, debug=self.debug)
-                        template_dict['result{num}'.format(num=i)] = res.strip('\'\"')
+                        template_dict['result{scenario}'.format(scenario=j)] = res.strip('\'\"')
 
                         if self.debug:
                             print(
                                 "Container {}, iteration {}: {}".format(self.containers[i].container.description,
                                                                         j, res))
+                            print("----------------------------------------------------")
 
                 data = self.containers[i].get_net_stats()
 
