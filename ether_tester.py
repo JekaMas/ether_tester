@@ -1,15 +1,16 @@
-import subprocess
-import pandas
-from io import StringIO
-import time
+import datetime
+import fcntl
+import os
 import random
 import string
-import os
-import fcntl
-import datetime
-import yaml
+import subprocess
 import threading
+import time
+from io import StringIO
 from string import Template
+
+import pandas
+import yaml
 
 
 class Container(object):
@@ -96,14 +97,14 @@ class Geth(Container):
     is_wait_sync = False
     is_synced = False
 
-    def __init__(self, eth_value, container_command=None, version='latest', description=None, init_time=1,
+    def __init__(self, eth_host_volume_path, container_command=None, version='latest', description=None, init_time=1,
                  is_wait_sync=False):
         port = Geth.port_default + Geth.port.increment()
         json_rpc_port = Geth.json_rpc_port_default + Geth.json_rpc_port.increment()
 
         docker_command = 'docker run -i --rm -p {json_rpc_port}:8545 -p {port}:30303 ' \
-                         '-v {eth_value}:/root/.ethereum'.format(
-            json_rpc_port=json_rpc_port, port=port, eth_value=eth_value)
+                         '-v {eth_host_volume_path}:/root/.ethereum'.format(
+            json_rpc_port=json_rpc_port, port=port, eth_host_volume_path=eth_host_volume_path)
 
         if container_command is None:
             container_command = Geth.ropsten_defaults
@@ -387,8 +388,8 @@ class StatisticsCollector(object):
         stats_list = []
         containers_count = len(self.containers)
 
-        for i in range(0, containers_count):
-            base_level_str = StringIO(self.containers[i].get_net_stats())
+        for c in self.containers:
+            base_level_str = StringIO(c.get_net_stats())
             base_level = pandas.read_csv(base_level_str, sep="\t")
             base_levels.append(base_level)
 
@@ -398,28 +399,30 @@ class StatisticsCollector(object):
         start_time = datetime.datetime.now()
         delta = 0
 
-        template_dict = dict()
+        template_dict_array = []
         if test_scenario is not None:
-            for i in range(0, len(test_scenario)):
-                template_dict['result{num}'.format(num=i)] = ''
+            template_dict_array = [{'result0': ''} for x in range(len(test_scenario))]
 
         while delta < n:
             # todo: run in parallel
+            print("----------------------------------------------------")
             for i in range(0, containers_count):
                 if test_scenario is not None:
                     # in test_scenario the results of prev steps can be used in placeholders like '$result0' -
                     # https://docs.python.org/3.1/library/string.html#template-strings
-                    for i, test_command in enumerate(test_scenario):
+                    for j, test_command in enumerate(test_scenario):
+                        template_dict = template_dict_array[i]
                         test_command = Template(test_command).safe_substitute(template_dict)
                         print("Template", template_dict, test_command)
 
                         res = self.containers[i].run(test_command, debug=self.debug)
-                        template_dict['result{num}'.format(num=i)] = res.strip('\'\"')
+                        template_dict['result{scenario}'.format(scenario=j)] = res.strip('\'\"')
 
                         if self.debug:
                             print(
                                 "Container {}, iteration {}: {}".format(self.containers[i].container.description,
-                                                                        i, res))
+                                                                        j, res))
+                            print("----------------------------------------------------")
 
                 data = self.containers[i].get_net_stats()
 
@@ -441,11 +444,12 @@ class StatisticsCollector(object):
 cluster = Cluster(
     [
         Geth(
-            eth_value="~/.ethereum/docker",
+            eth_host_volume_path="~/.ethereum/docker",
+            container_command=Geth.ropsten_defaults + " --shh",
             description="Geth with Whisper service",
             init_time=20),
         Geth(
-            eth_value="~/.ethereum/docker2",
+            eth_host_volume_path="~/.ethereum/docker2",
             description="Geth without Whisper service",
             init_time=20)
     ],
@@ -468,7 +472,7 @@ geth1 = ContainerManager(name=geth_docker_name1)
 
 start new container:
 g1 = Geth(
-    eth_value="~/.ethereum/docker",
+    eth_host_volume_path="~/.ethereum/docker",
     description="Geth with Whisper service",
     init_time=20)
 
