@@ -1,15 +1,16 @@
-import subprocess
-import pandas
-from io import StringIO
-import time
+import datetime
+import fcntl
+import os
 import random
 import string
-import os
-import fcntl
-import datetime
-import yaml
+import subprocess
 import threading
+import time
+from io import StringIO
 from string import Template
+
+import pandas
+import yaml
 
 
 class Container(object):
@@ -96,14 +97,14 @@ class Geth(Container):
     is_wait_sync = False
     is_synced = False
 
-    def __init__(self, eth_value, container_command=None, version='latest', description=None, init_time=1,
+    def __init__(self, eth_host_volume_path, container_command=None, version='latest', description=None, init_time=1,
                  is_wait_sync=False):
         port = Geth.port_default + Geth.port.increment()
         json_rpc_port = Geth.json_rpc_port_default + Geth.json_rpc_port.increment()
 
         docker_command = 'docker run -i --rm -p {json_rpc_port}:8545 -p {port}:30303 ' \
-                         '-v {eth_value}:/root/.ethereum'.format(
-            json_rpc_port=json_rpc_port, port=port, eth_value=eth_value)
+                         '-v {eth_host_volume_path}:/root/.ethereum'.format(
+            json_rpc_port=json_rpc_port, port=port, eth_host_volume_path=eth_host_volume_path)
 
         if container_command is None:
             container_command = Geth.ropsten_defaults
@@ -441,11 +442,11 @@ class StatisticsCollector(object):
 cluster = Cluster(
     [
         Geth(
-            eth_value="~/.ethereum/docker",
+            eth_host_volume_path="~/.ethereum/docker",
             description="Geth with Whisper service",
             init_time=20),
         Geth(
-            eth_value="~/.ethereum/docker2",
+            eth_host_volume_path="~/.ethereum/docker2",
             description="Geth without Whisper service",
             init_time=20)
     ],
@@ -468,7 +469,7 @@ geth1 = ContainerManager(name=geth_docker_name1)
 
 start new container:
 g1 = Geth(
-    eth_value="~/.ethereum/docker",
+    eth_host_volume_path="~/.ethereum/docker",
     description="Geth with Whisper service",
     init_time=20)
 
