@@ -410,7 +410,7 @@ class StatisticsCollector(object):
                 if test_scenario is not None:
                     # in test_scenario the results of prev steps can be used in placeholders like '$result0' -
                     # https://docs.python.org/3.1/library/string.html#template-strings
-                    for i, test_command in enumerate(test_scenario):
+                    for j, test_command in enumerate(test_scenario):
                         test_command = Template(test_command).safe_substitute(template_dict)
                         print("Template", template_dict, test_command)
 
@@ -420,7 +420,7 @@ class StatisticsCollector(object):
                         if self.debug:
                             print(
                                 "Container {}, iteration {}: {}".format(self.containers[i].container.description,
-                                                                        i, res))
+                                                                        j, res))
 
                 data = self.containers[i].get_net_stats()
 
