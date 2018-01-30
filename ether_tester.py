@@ -443,6 +443,7 @@ cluster = Cluster(
     [
         Geth(
             eth_host_volume_path="~/.ethereum/docker",
+            container_command=Geth.ropsten_defaults + " --shh",
             description="Geth with Whisper service",
             init_time=20),
         Geth(
