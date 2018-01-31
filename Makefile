@@ -1,5 +1,5 @@
 run:
-	python3 -m main
+	python3 -m main -u ${usecase}
 
 deps: get-geth
 	pip install -r requirements.txt

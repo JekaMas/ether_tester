@@ -1,3 +1,14 @@
+## Executing a use case
+
+```shell
+make run usecase=<usecase-file-name> # usecase-file-name is the name of a file in ./usecases/
+```
+
+e.g.
+```shell
+make run usecase=create_2_accounts_with_and_without_whisper
+```
+
 ## Start new test cluster
 
 ```
