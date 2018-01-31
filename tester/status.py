@@ -4,14 +4,14 @@ from .geth import Geth
 # todo: implement
 class Status(Geth):
     'docker build -f {status_path} -t status_image:{tag} .'
-    def __init__(self, eth_value, container_command=None, version='latest', description=None, init_time=1,
+    def __init__(self, eth_host_volume_path, container_command=None, version='latest', description=None, init_time=1,
                  is_wait_sync=False):
         port = Geth.port_default + Geth.port.increment()
         json_rpc_port = Geth.json_rpc_port_default + Geth.json_rpc_port.increment()
 
         docker_command = 'docker run -i --rm -p {json_rpc_port}:8545 -p {port}:30303 ' \
-                         '-v {eth_value}:/root/.ethereum'.format(
-            json_rpc_port=json_rpc_port, port=port, eth_value=eth_value)
+                         '-v {eth_host_volume_path}:/root/.ethereum'.format(
+            json_rpc_port=json_rpc_port, port=port, eth_host_volume_path=eth_host_volume_path)
 
         if container_command is None:
             container_command = Geth.ropsten_defaults
@@ -27,4 +27,3 @@ class Status(Geth):
         self.is_wait_sync = is_wait_sync
 
         super().__init__(self.docker_command, self.container_command, self.description, self.init_time)
-

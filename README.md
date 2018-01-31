@@ -5,11 +5,11 @@ cluster = Cluster(
     [
         Geth(
             shh=True,
-            eth_value="~/.ethereum/docker",
+            eth_host_volume_path="~/.ethereum/docker",
             description="Geth with Whisper service",
             init_time=20),
         Geth(
-            eth_value="~/.ethereum/docker2",
+            eth_host_volume_path="~/.ethereum/docker2",
             description="Geth without Whisper service",
             init_time=20)
     ],

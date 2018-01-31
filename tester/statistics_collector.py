@@ -1,7 +1,8 @@
-import pandas
-from io import StringIO
 import datetime
+from io import StringIO
 from string import Template
+
+import pandas
 
 
 class StatisticsCollector(object):
