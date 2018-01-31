@@ -1,6 +1,7 @@
-## Start new test cluster
+from tester.cluster import Cluster
+from tester.geth import Geth
 
-```
+
 cluster = Cluster(
     [
         Geth(
@@ -14,22 +15,11 @@ cluster = Cluster(
             init_time=20)
     ],
     is_wait_sync=True, debug=False).start()
-```
 
+# idle case
+# stats_list = stats.collect_stats(60)
 
-## Run test scenario with params and print stats
-
-```
 # create account case
 cluster.collect_stats(60, ['personal.newAccount(\"passphrase\")', 'miner.setEtherbase(\"$result0\")'])
 
 cluster.print_stats()
-```
-
-## Use already running container
-If can use any container already running without starting new one.
-
-```
-geth_docker_name1 = "ethereum1"
-geth1 = ContainerManager(name=geth_docker_name1)
-```
