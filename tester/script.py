@@ -1,6 +1,6 @@
-import subprocess
-import os
 import fcntl
+import os
+import subprocess
 
 
 class Script(object):

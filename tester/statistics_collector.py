@@ -1,7 +1,8 @@
-import pandas
-from io import StringIO
 import datetime
+from io import StringIO
 from string import Template
+
+import pandas
 
 
 class StatisticsCollector(object):
@@ -15,8 +16,8 @@ class StatisticsCollector(object):
         stats_list = []
         containers_count = len(self.containers)
 
-        for i in range(0, containers_count):
-            base_level_str = StringIO(self.containers[i].get_net_stats())
+        for c in self.containers:
+            base_level_str = StringIO(c.get_net_stats())
             base_level = pandas.read_csv(base_level_str, sep="\t")
             base_levels.append(base_level)
 
@@ -26,29 +27,30 @@ class StatisticsCollector(object):
         start_time = datetime.datetime.now()
         delta = 0
 
-        template_dict = dict()
-        if test_scenario is not None:
-            for i in range(0, len(test_scenario)):
-                template_dict['result{num}'.format(num=i)] = ''
+        template_dict_array = [{'result{}'.format(t): '' for t in range(len(test_scenario))} for c in self.containers]
 
+        run = 1
         while delta < n:
             # todo: run in parallel
-            for i in range(0, containers_count):
+            print("\nRun #{}------------------------------------------------".format(run))
+            for i, c in enumerate(self.containers):
+                template_dict = template_dict_array[i]
                 if test_scenario is not None:
                     # in test_scenario the results of prev steps can be used in placeholders like '$result0' -
                     # https://docs.python.org/3.1/library/string.html#template-strings
                     for j, test_command in enumerate(test_scenario):
                         test_command = Template(test_command).safe_substitute(template_dict)
 
-                        res = self.containers[i].run(test_command, debug=self.debug)
+                        res = c.run(test_command, debug=self.debug)
                         template_dict['result{num}'.format(num=j)] = res.strip('\'\"')
 
                         if self.debug:
                             print(
-                                "Container {}, iteration {}: {}".format(self.containers[i].container.description,
-                                                                        i, res))
+                                "Container {}, iteration {}: {}".format(c.container.description,
+                                                                        j, res))
+                            print("------------------------------------------------------")
 
-                data = self.containers[i].get_net_stats()
+                data = c.get_net_stats()
 
                 new_level = StringIO(data)
                 df = pandas.read_csv(new_level, sep="\t")
@@ -58,6 +60,7 @@ class StatisticsCollector(object):
 
             current_time = datetime.datetime.now()
             delta = int((current_time - start_time).total_seconds())
+            run = run + 1
 
         for i in range(0, containers_count):
             stats_list[i] = stats_list[i].astype(int)

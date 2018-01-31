@@ -1,4 +1,5 @@
 import threading
+
 from .container_manager import ContainerManager
 from .statistics_collector import StatisticsCollector
 
@@ -33,6 +34,23 @@ class Cluster(object):
             t.join()
 
         self.is_started = True
+
+        return self
+
+    def stop(self):
+        if not self.is_started:
+            return
+
+        threads = []
+        for c in self.containers:
+            t = threading.Thread(target=c.stop)
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        self.is_started = False
 
         return self
 

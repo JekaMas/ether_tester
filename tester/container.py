@@ -25,18 +25,22 @@ class Container(object):
         time.sleep(self.init_time)
         self.print_output()
 
+    def stop(self):
+        self.p.stdin.write("exit\n")
+
     def get_output(self):
         out = []
         while True:
-            inchar = self.p.stdout.readline()
-            if inchar:  # neither empty string nor None
-                line = str(inchar).strip()
+            raw_line = self.p.stdout.readline()
+            if raw_line:  # neither empty string nor None
+                line = str(raw_line).strip()
                 if line == ">":
                     # strip the greetings
                     continue
 
-                out.append(line)
-            else:
+                if line:
+                    out.append(line)
+            elif out:
                 break
 
         self.last_output = "\n".join(out)
@@ -55,7 +59,7 @@ class Container(object):
         time.sleep(1)
 
         if debug:
-            print("RUN", self.description, command + "\n")
+            print("RUN", self.description, "\'{}\'\n".format(command))
 
         return self.get_output()
 
