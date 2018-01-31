@@ -110,7 +110,7 @@ class Geth(Container):
             current_block = int(result.get('currentBlock'))
             highest_block = int(result.get("highestBlock"))
 
-            if highest_block > 0 and current_block >= highest_block:
+            if 0 < highest_block <= current_block:
                 break
 
             print('{name} is still syncing. {current_block} out of {highest_block}'.format(name=self.description,
