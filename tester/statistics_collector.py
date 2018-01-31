@@ -46,7 +46,7 @@ class StatisticsCollector(object):
                         if self.debug:
                             print(
                                 "Container {}, iteration {}: {}".format(self.containers[i].container.description,
-                                                                        i, res))
+                                                                        j, res))
 
                 data = self.containers[i].get_net_stats()
 
