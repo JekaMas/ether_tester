@@ -24,6 +24,8 @@ cluster = Cluster(
 cluster.collect_stats(60, ['personal.newAccount(\"passphrase\")', 'miner.setEtherbase(\"$result0\")'])
 
 cluster.print_stats()
+
+cluster.stop()
 ```
 
 ## Use already running container

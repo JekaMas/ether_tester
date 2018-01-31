@@ -37,6 +37,23 @@ class Cluster(object):
 
         return self
 
+    def stop(self):
+        if not self.is_started:
+            return
+
+        threads = []
+        for c in self.containers:
+            t = threading.Thread(target=c.stop)
+            threads.append(t)
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        self.is_started = False
+
+        return self
+
     def collect_stats(self, n, test_scenario=None):
         if not self.is_started:
             return None

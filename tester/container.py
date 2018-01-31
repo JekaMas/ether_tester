@@ -25,6 +25,9 @@ class Container(object):
         time.sleep(self.init_time)
         self.print_output()
 
+    def stop(self):
+        self.p.stdin.write("exit\n")
+
     def get_output(self):
         out = []
         while True:
