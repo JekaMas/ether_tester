@@ -54,11 +54,11 @@ class Cluster(object):
 
         return self
 
-    def collect_stats(self, n, test_scenario=None):
+    def collect_stats(self, n, test_scenario_js=None, test_scenario_py=None):
         if not self.is_started:
             return None
 
-        self.stats = self.stats_collector.collect_stats(n, test_scenario)
+        self.stats = self.stats_collector.collect_stats(n, test_scenario_js=test_scenario_js, test_scenario_py=test_scenario_py)
 
         return self.stats
 
@@ -87,7 +87,7 @@ class Cluster(object):
 
         for i, c in enumerate(self.containers):
             if i == bias_num:
-                print("Network difference wrt {num} container:".format(num=bias_num))
+                print("Network difference wrt '{}' container:".format(c.description))
                 continue
             if len(self.stats[i]) == 0:
                 continue

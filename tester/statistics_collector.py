@@ -65,7 +65,17 @@ class StatisticsCollector(object):
                                 print("------------------------------------------------------")
                     else:
                         #todo execute python scenario
-                        pass
+                        for j, test_command in enumerate(test_scenario):
+                            #test_command = Template(test_command).safe_substitute(template_dict)
+
+                            res = c.run(command_py=test_command, state_dict=template_dict, debug=self.debug)
+                            template_dict['result{num}'.format(num=j)] = res
+
+                            if self.debug:
+                                print(
+                                    "Container {}, iteration {}: {}".format(c.container.description,
+                                                                            j, res))
+                                print("------------------------------------------------------")
 
                 data = c.get_net_stats()
 

@@ -83,7 +83,7 @@ class Geth(Container):
             self.web3 = Web3(IPCProvider(self.ipcPath))
             self.web3.shh = Shh(self.web3) #use WhisperV5 API
 
-    def run(self, command_js=None, test_scenario_py=None, debug=False, queue=None, force_skip_sync=False):
+    def run(self, command_js=None, command_py=None, state_dict=None, debug=False, queue=None, force_skip_sync=False):
         if not force_skip_sync and self.is_wait_sync and not self.is_synced:
             self.wait_sync()
 
@@ -95,10 +95,7 @@ class Geth(Container):
 
             return result
 
-        #todo: somehow run py script
-        #shh call example
-        print("!!!!!!!!!!!!!!!",
-              self.web3.shh.getFilterMessages("2b47fbafb3cce24570812a82e6e93cd9e2551bbc4823f6548ff0d82d2206b326"))
+        return command_py(self.web3, state_dict)
 
     def wait_sync(self):
         print("waiting for sync", self.description)
