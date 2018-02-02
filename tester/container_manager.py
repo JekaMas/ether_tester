@@ -40,17 +40,11 @@ class ContainerManager(object):
 
         return Script.pipe([pid_net_stats, get_eth0, format_stats])
 
-    def get_command(self, command):
-        def fn():
-            return self.container.run(command)
-
-        return fn
-
     def send_command(self, command):
         p_stdin = 'cat /proc/{container_pid}/fd/0'.format(container_pid=self.get_pid())
         sent_stdin = 'echo "{command}" > {stdin}'.format(command=command, stdin=p_stdin)
 
         Script.sh(sent_stdin)
 
-    def run(self, command, debug=False):
-        return self.container.run(command, debug)
+    def run(self, command_js=None, test_scenario_py=None, debug=False):
+        return self.container.run(command_js=command_js, test_scenario_py=test_scenario_py, debug=debug)

@@ -1,9 +1,11 @@
 import time
 
 import yaml
+from web3 import Web3, IPCProvider
 
 from .container import Container
 from .counter import AtomicCounter
+from .shh import Shh
 
 
 class Geth(Container):
@@ -66,6 +68,10 @@ class Geth(Container):
         self.init_time = init_time
         self.is_wait_sync = is_wait_sync
 
+        # todo: add class with network properties: ID, bootnodes, name
+        self.ipcPath = eth_host_volume_path + '/testnet/geth.ipc'
+        self.web3 = None
+
         super().__init__(self.docker_command, self.container_command, self.description, self.init_time)
 
     def start(self):
@@ -73,16 +79,26 @@ class Geth(Container):
         if self.is_wait_sync and not self.is_synced:
             self.wait_sync()
 
-    def run(self, command, debug=False, queue=None, force_skip_sync=False):
+        if self.web3 is None:
+            self.web3 = Web3(IPCProvider(self.ipcPath))
+            self.web3.shh = Shh(self.web3) #use WhisperV5 API
+
+    def run(self, command_js=None, test_scenario_py=None, debug=False, queue=None, force_skip_sync=False):
         if not force_skip_sync and self.is_wait_sync and not self.is_synced:
             self.wait_sync()
 
-        result = super().run(command, debug)
+        if command_js is not None:
+            result = super().run(command_js, debug)
 
-        if queue is not None:
-            queue.put(result)
+            if queue is not None:
+                queue.put(result)
 
-        return result
+            return result
+
+        #todo: somehow run py script
+        #shh call example
+        print("!!!!!!!!!!!!!!!",
+              self.web3.shh.getFilterMessages("2b47fbafb3cce24570812a82e6e93cd9e2551bbc4823f6548ff0d82d2206b326"))
 
     def wait_sync(self):
         print("waiting for sync", self.description)
