@@ -15,7 +15,7 @@ class Cluster(object):
 
         for c in containers:
             if is_wait_sync is not None:
-                c.wait_sync = is_wait_sync
+                c.is_wait_sync = is_wait_sync
             self.container_managers.append(ContainerManager(container=c))
 
         self.stats_collector = StatisticsCollector(self.container_managers, debug=self.debug)
