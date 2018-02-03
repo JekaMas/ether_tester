@@ -15,7 +15,7 @@ class Cluster(object):
 
         for c in containers:
             if is_wait_sync is not None:
-                c.wait_sync = is_wait_sync
+                c.is_wait_sync = is_wait_sync
             self.container_managers.append(ContainerManager(container=c))
 
         self.stats_collector = StatisticsCollector(self.container_managers, debug=self.debug)
@@ -58,7 +58,7 @@ class Cluster(object):
         if not self.is_started:
             return None
 
-        self.stats = self.stats_collector.collect_stats(n, test_scenario)
+        self.stats = self.stats_collector.collect_stats(n, test_scenario=test_scenario)
 
         return self.stats
 
@@ -87,7 +87,7 @@ class Cluster(object):
 
         for i, c in enumerate(self.containers):
             if i == bias_num:
-                print("Network difference wrt {num} container:".format(num=bias_num))
+                print("Network difference wrt '{}' container:".format(c.description))
                 continue
             if len(self.stats[i]) == 0:
                 continue
