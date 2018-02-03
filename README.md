@@ -15,7 +15,7 @@ make run usecase=create_2_accounts_with_and_without_whisper
 cluster = Cluster(
     [
         Geth(
-            shh=True,
+            extra_container_args=['--shh'],
             eth_host_volume_path="~/.ethereum/docker",
             description="Geth with Whisper service",
             init_time=20),

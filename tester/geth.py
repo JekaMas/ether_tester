@@ -1,5 +1,7 @@
 import time
+import os
 
+import copy
 import yaml
 from web3 import Web3, IPCProvider
 
@@ -14,7 +16,7 @@ class Geth(Container):
 
     port_default = 30303
     json_rpc_port_default = 8545
-    ropsten_defaults = "--testnet --syncmode \"fast\" --cache=256"
+    ropsten_defaults = ["--testnet", '--syncmode "fast"', '--cache=256']
     ropsten_bootnodes = [
         "enode://7ab298cedc4185a894d21d8a4615262ec6bdce66c9b6783878258e0d5b31013d30c9038932432f70e5b2b6a5cd323bf820554fcb22fbc7b45367889522e9c449@51.15.63.93:30303",
         "enode://f59e8701f18c79c5cbc7618dc7bb928d44dc2f5405c7d693dad97da2d8585975942ec6fd36d3fe608bfdc7270a34a4dd00f38cfe96b2baa24f7cd0ac28d382a1@51.15.79.88:30303",
@@ -36,40 +38,43 @@ class Geth(Container):
     is_wait_sync = False
     is_synced = False
 
-    def __init__(self, eth_host_volume_path, container_command=None, bootnodes=None, shh=False, version='latest', description=None,
+    def __init__(self, eth_host_volume_path, container_command=None, bootnodes=None, extra_container_args=None, version='latest', description=None,
                  init_time=1,
                  is_wait_sync=False):
+        eth_host_volume_path = os.path.abspath(os.path.expanduser(eth_host_volume_path))
         port = Geth.port_default + Geth.port.increment()
         json_rpc_port = Geth.json_rpc_port_default + Geth.json_rpc_port.increment()
+        root_container_path = '/.ethereum'
 
-        docker_command = 'docker run -i --rm -p {json_rpc_port}:8545 -p {port}:30303 ' \
-                         '-v {eth_host_volume_path}:/root/.ethereum'.format(
-            json_rpc_port=json_rpc_port, port=port, eth_host_volume_path=eth_host_volume_path)
+        docker_command = 'docker run -i --rm --user $(id -u) -p {json_rpc_port}:8545 -p {port}:30303 ' \
+                         '-v {eth_host_volume_path}:{root_container_path}'.format(
+            json_rpc_port=json_rpc_port, port=port, eth_host_volume_path=eth_host_volume_path, root_container_path=root_container_path)
 
         if container_command is None:
-            container_command = Geth.ropsten_defaults
+            container_command = copy.copy(Geth.ropsten_defaults)
 
         if bootnodes is None:
             self.bootnodes = self.ropsten_bootnodes
         else:
             self.bootnodes = bootnodes
-        container_command += " --bootnodes=\"{bootnodes}\"".format(bootnodes=','.join(self.bootnodes))
+        container_command += ['--bootnodes="{bootnodes}"'.format(bootnodes=','.join(self.bootnodes))]
 
-        if shh is True:
-            container_command += " --shh"
+        if not extra_container_args is None:
+            container_command += extra_container_args
 
-        container_command = "ethereum/client-go:{version} {container_command}".format(version=version,
-                                                                                      container_command=container_command)
-        container_command += " --rpc --rpcaddr \"0.0.0.0\" --verbosity 2 console"
+        relative_ipc_path = 'testnet/geth.ipc'
+        container_command.insert(0, 'ethereum/client-go:{version}'.format(version=version))
+        container_command += ['--datadir /.ethereum', '--ipcpath {}'.format(os.path.join(root_container_path, relative_ipc_path))]
+        container_command += ['--rpc', '--rpcaddr "0.0.0.0"', '--verbosity 2', 'console']
 
         self.docker_command = docker_command
-        self.container_command = container_command
+        self.container_command = " ".join(container_command)
         self.description = description
         self.init_time = init_time
         self.is_wait_sync = is_wait_sync
 
         # todo: add class with network properties: ID, bootnodes, name
-        self.ipcPath = eth_host_volume_path + '/testnet/geth.ipc'
+        self.ipcPath = os.path.join(eth_host_volume_path, relative_ipc_path)
         self.web3 = None
 
         super().__init__(self.docker_command, self.container_command, self.description, self.init_time)
@@ -81,7 +86,7 @@ class Geth(Container):
 
         if self.web3 is None:
             self.web3 = Web3(IPCProvider(self.ipcPath))
-            self.web3.shh = Shh(self.web3) #use WhisperV5 API
+            self.web3.shh = Shh(self.web3)  # use WhisperV5 API
 
     def runJavascript(self, command=None, debug=False, queue=None, force_skip_sync=False):
         if not force_skip_sync and self.is_wait_sync and not self.is_synced:
@@ -129,7 +134,7 @@ class Geth(Container):
                 result = yaml.load(result_json)
             except Exception as e:
                 err = str(e)
-                print('Loading json error={error}\njson=\"{json}\"\nlength={length}'.format(error=err,
+                print('Loading json error="{error}"\njson="{json}"\nlength={length}'.format(error=err,
                                                                                             json=result_json,
                                                                                             length=len(result_json)))
                 raise
