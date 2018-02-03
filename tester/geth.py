@@ -83,19 +83,33 @@ class Geth(Container):
             self.web3 = Web3(IPCProvider(self.ipcPath))
             self.web3.shh = Shh(self.web3) #use WhisperV5 API
 
-    def run(self, command_js=None, command_py=None, state_dict=None, debug=False, queue=None, force_skip_sync=False):
+    def runJavascript(self, command=None, debug=False, queue=None, force_skip_sync=False):
         if not force_skip_sync and self.is_wait_sync and not self.is_synced:
             self.wait_sync()
 
-        if command_js is not None:
-            result = super().run(command_js, debug)
+        if command is not None:
+            result = super().run(command, debug)
 
             if queue is not None:
                 queue.put(result)
 
             return result
 
-        return command_py(self.web3, state_dict)
+        return None
+
+    def run(self, command=None, state_dict=None, debug=False, queue=None, force_skip_sync=False):
+        if not force_skip_sync and self.is_wait_sync and not self.is_synced:
+            self.wait_sync()
+
+        if command is not None:
+            result = command(self.web3, state_dict)
+
+            if queue is not None:
+                queue.put(result)
+
+            return result
+
+        return None
 
     def wait_sync(self):
         print("waiting for sync", self.description)
@@ -107,7 +121,7 @@ class Geth(Container):
         max_tries = 10
         while True:
             time.sleep(60)
-            result_json = self.run("eth.syncing", force_skip_sync=True).strip()
+            result_json = self.runJavascript("eth.syncing", force_skip_sync=True).strip()
             if result_json == "false":
                 break
 
@@ -121,7 +135,7 @@ class Geth(Container):
                 raise
 
             current_block = int(result.get('currentBlock'))
-            highest_block = int(result.get("highestBlock"))
+            highest_block = int(result.get('highestBlock'))
 
             if 0 < highest_block <= current_block:
                 break
@@ -133,10 +147,13 @@ class Geth(Container):
 
             diff = highest_block - current_block
 
-            if previous_diff != 0 and diff == previous_diff:
-                tries += 1
-                if tries == max_tries:
-                    raise BaseException("Cant sync after {tries} tries".format(tries=tries))
+            if previous_diff != 0:
+                if diff == previous_diff:
+                    tries += 1
+                    if tries == max_tries:
+                        raise BaseException("Can't sync after {tries} tries".format(tries=tries))
+                else:
+                    tries = 0 # Reset number of tries
 
             previous_diff = diff
 

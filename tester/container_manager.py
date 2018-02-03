@@ -46,5 +46,5 @@ class ContainerManager(object):
 
         Script.sh(sent_stdin)
 
-    def run(self, command_js=None, command_py=None, state_dict=None, debug=False):
-        return self.container.run(command_js=command_js, command_py=command_py, state_dict=state_dict, debug=debug)
+    def run(self, command=None, state_dict=None, debug=False):
+        return self.container.run(command=command, state_dict=state_dict, debug=debug)

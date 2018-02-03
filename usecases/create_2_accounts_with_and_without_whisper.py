@@ -22,7 +22,8 @@ class UseCase:
         # stats_list = stats.collect_stats(60)
 
         # create account case
-        cluster.collect_stats(60, ['personal.newAccount(\"passphrase\")', 'miner.setEtherbase(\"$result0\")'])
+        cluster.collect_stats(60, [lambda web3, state_dict: web3.personal.newAccount("passphrase"),
+                                   lambda web3, state_dict: web3.miner.setEtherbase(state_dict['result0'])])
 
         cluster.print_stats()
 

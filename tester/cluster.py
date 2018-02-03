@@ -54,11 +54,11 @@ class Cluster(object):
 
         return self
 
-    def collect_stats(self, n, test_scenario_js=None, test_scenario_py=None):
+    def collect_stats(self, n, test_scenario=None):
         if not self.is_started:
             return None
 
-        self.stats = self.stats_collector.collect_stats(n, test_scenario_js=test_scenario_js, test_scenario_py=test_scenario_py)
+        self.stats = self.stats_collector.collect_stats(n, test_scenario=test_scenario)
 
         return self.stats
 
